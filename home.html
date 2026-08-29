@@ -1,0 +1,238 @@
+{% extends 'scraper/base.html' %}
+{% load static %}
+
+{% block title %}Scrape Reviews{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Glass Hero Card -->
+        <div class="card glass-card border-0 rounded-4 p-4 mb-5">
+            <div class="card-body text-center">
+                <h2 class="display-5 fw-bold text-white mb-3">
+                    <i class="fas fa-robot text-primary me-2"></i> Smart Review Scraper
+                </h2>
+                <p class="text-light-50 mb-4">Paste any review URL — we’ll fetch the data instantly.</p>
+
+                <form id="scrape-form" novalidate>
+                    {% csrf_token %}
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-7">
+                            <label for="id_url" class="form-label text-white-50 fw-semibold">URL</label>
+                            <input type="url" name="url" class="form-control form-control-lg glass-input" 
+                                   id="id_url" placeholder="https://www.trustpilot.com/review/amazon.com" required>
+                            <div class="invalid-feedback" id="url-error"></div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="id_max_reviews" class="form-label text-white-50 fw-semibold">Max reviews</label>
+                            <input type="number" name="max_reviews" class="form-control form-control-lg glass-input" 
+                                   id="id_max_reviews" value="20" min="1" max="5000">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary btn-lg w-100 neon-btn" id="scrape-btn">
+                                <i class="fas fa-spinner" id="spinner-icon"></i> Go
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Loading Skeleton -->
+                <div id="loading" class="mt-5" style="display:none;">
+                    <div class="row g-3">
+                        {% for i in "123" %}
+                        <div class="col-md-4">
+                            <div class="card skeleton-card" style="height: 120px; border-radius: 20px;"></div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <p class="text-white-50 mt-3"><i class="fas fa-spinner fa-spin me-2"></i> Scraping, please wait...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Container -->
+        <div id="results-container" style="display:none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold text-white" id="result-message"></h4>
+                <span class="badge bg-primary rounded-pill px-3 py-2" id="result-count">0</span>
+            </div>
+            <div id="review-list" class="glass-card rounded-4 p-3"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== IMAGE MODAL ======================== -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content glass-card p-3">
+            <div class="modal-body text-center">
+                <img id="modalAvatarImg" src="" class="img-fluid rounded-3" style="max-height: 300px; object-fit: contain;">
+                <div class="mt-3">
+                    <input type="text" id="modalAvatarUrl" class="form-control glass-input" readonly value="" style="font-size: 0.85rem; background: rgba(255,255,255,0.04);">
+                    <button class="btn btn-primary btn-sm mt-2 neon-btn" onclick="copyUrl()">Copy URL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== SCRAPING SCRIPT ======================== -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('scrape-form');
+    const scrapeBtn = document.getElementById('scrape-btn');
+    const spinner = document.getElementById('spinner-icon');
+    const loading = document.getElementById('loading');
+    const resultsContainer = document.getElementById('results-container');
+    const resultMessage = document.getElementById('result-message');
+    const resultCount = document.getElementById('result-count');
+    const reviewList = document.getElementById('review-list');
+    const urlInput = document.getElementById('id_url');
+    const urlError = document.getElementById('url-error');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        urlInput.classList.remove('is-invalid');
+        urlError.textContent = '';
+
+        loading.style.display = 'block';
+        resultsContainer.style.display = 'none';
+        scrapeBtn.disabled = true;
+        spinner.classList.add('fa-spin');
+
+        const formData = new FormData(form);
+        fetch("{% url 'scraper:ajax_scrape' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            loading.style.display = 'none';
+            scrapeBtn.disabled = false;
+            spinner.classList.remove('fa-spin');
+
+            if (data.error) {
+                urlInput.classList.add('is-invalid');
+                urlError.textContent = data.error;
+                return;
+            }
+
+            resultsContainer.style.display = 'block';
+            resultMessage.textContent = `✅ Found ${data.reviews.length} reviews`;
+            resultCount.textContent = data.reviews.length;
+            reviewList.innerHTML = '';
+
+            if (data.reviews.length === 0) {
+                reviewList.innerHTML = '<div class="alert alert-warning">No reviews found.</div>';
+                return;
+            }
+
+            data.reviews.forEach((review, index) => {
+                const serial = index + 1;
+                const rating = review.rating || 0;
+                const stars = '★'.repeat(Math.round(rating)) + '☆'.repeat(5 - Math.round(rating));
+                const initial = review.reviewer ? review.reviewer.charAt(0).toUpperCase() : '?';
+                
+                // Avatar – add data-url attribute for the modal
+                let avatarHtml;
+                if (review.avatar) {
+                    avatarHtml = `<img src="${review.avatar}" class="avatar-img" data-url="${review.avatar}">`;
+                } else {
+                    avatarHtml = `<div class="avatar-fallback" data-url="">${initial}</div>`;
+                }
+
+                const verifiedBadge = review.is_verified 
+                    ? '<span class="badge bg-success-subtle text-success ms-1"><i class="fas fa-check-circle"></i></span>' 
+                    : '';
+
+                let dateHtml = '';
+                if (review.date) {
+                    const d = new Date(review.date);
+                    if (!isNaN(d)) {
+                        const month = d.toLocaleString('default', { month: 'short' });
+                        const year = d.getFullYear();
+                        dateHtml = `<span class="date-badge">${month} ${year}</span>`;
+                    } else {
+                        dateHtml = `<span class="date-badge">${review.date}</span>`;
+                    }
+                }
+
+                const row = `
+                    <div class="review-row d-flex align-items-start py-2 border-bottom border-light border-opacity-10">
+                        <div class="sno-col text-center" style="width:60px; flex-shrink:0;">
+                            <span class="badge bg-secondary rounded-circle" style="font-size:14px; padding:6px 10px;">${serial}</span>
+                        </div>
+                        <div class="avatar-col" style="width:60px; flex-shrink:0;">
+                            ${avatarHtml}
+                        </div>
+                        <div class="name-col" style="min-width:120px; flex-shrink:0;">
+                            <h6 class="fw-bold text-white mb-0">${review.reviewer} ${verifiedBadge}</h6>
+                        </div>
+                        <div class="rating-col" style="min-width:120px; flex-shrink:0;">
+                            <span class="rating-badge">${stars} ${rating}</span>
+                        </div>
+                        <div class="desc-col flex-grow-1 px-2">
+                            <p class="review-text mb-0">${review.content || ''}</p>
+                        </div>
+                        <div class="date-col" style="min-width:90px; flex-shrink:0; text-align:right;">
+                            ${dateHtml}
+                        </div>
+                    </div>
+                `;
+                reviewList.innerHTML += row;
+            });
+
+            // ----- Attach click handlers to avatars (after rendering) -----
+            document.querySelectorAll('.avatar-img, .avatar-fallback').forEach(el => {
+                el.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    let imgUrl = this.dataset.url || '';
+                    // If it's an image, use src if data-url empty
+                    if (!imgUrl && this.tagName === 'IMG') {
+                        imgUrl = this.src;
+                    }
+                    if (imgUrl) {
+                        document.getElementById('modalAvatarImg').src = imgUrl;
+                        document.getElementById('modalAvatarUrl').value = imgUrl;
+                        new bootstrap.Modal(document.getElementById('imageModal')).show();
+                    } else {
+                        // No image – show a friendly message or alert
+                        alert('No profile image available for this reviewer.');
+                    }
+                });
+            });
+
+        })
+        .catch(error => {
+            loading.style.display = 'none';
+            scrapeBtn.disabled = false;
+            spinner.classList.remove('fa-spin');
+            urlInput.classList.add('is-invalid');
+            urlError.textContent = 'Network error – please try again.';
+            console.error('Error:', error);
+        });
+    });
+});
+
+// ========== COPY URL FUNCTION ==========
+function copyUrl() {
+    const urlInput = document.getElementById('modalAvatarUrl');
+    urlInput.select();
+    navigator.clipboard.writeText(urlInput.value).then(() => {
+        const btn = document.querySelector('#imageModal .btn');
+        const originalText = btn.textContent;
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => { btn.textContent = originalText; }, 2000);
+    }).catch(() => {
+        // fallback
+        document.execCommand('copy');
+        alert('URL copied to clipboard!');
+    });
+}
+</script>
+{% endblock %}
