@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.pyc
+db_local_backup.sqlite3
+debug_no_containers.html
+.env

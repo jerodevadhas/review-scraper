@@ -1,0 +1,8 @@
+Django==4.2.7
+selenium
+webdriver-manager
+requests
+beautifulsoup4
+pandas
+openpyxl
+textblob

@@ -1,0 +1,204 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Inter', sans-serif;
+    background: #0b0f1a;
+    min-height: 100vh;
+    color: #f8fafc;
+}
+
+/* ---- Particle Background ---- */
+.particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+}
+.particles::before {
+    content: '';
+    position: absolute;
+    width: 300%;
+    height: 300%;
+    top: -100%;
+    left: -100%;
+    background-image: 
+        radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.15), transparent),
+        radial-gradient(2px 2px at 40% 70%, rgba(255,255,255,0.1), transparent),
+        radial-gradient(2px 2px at 60% 20%, rgba(255,255,255,0.12), transparent),
+        radial-gradient(2px 2px at 80% 80%, rgba(255,255,255,0.08), transparent),
+        radial-gradient(2px 2px at 10% 90%, rgba(255,255,255,0.1), transparent),
+        radial-gradient(2px 2px at 90% 10%, rgba(255,255,255,0.08), transparent),
+        radial-gradient(1px 1px at 50% 50%, rgba(255,255,255,0.2), transparent);
+    background-size: 200px 200px;
+    animation: drift 40s linear infinite;
+    opacity: 0.6;
+}
+@keyframes drift {
+    0% { transform: translate(0,0); }
+    100% { transform: translate(-30%,-20%); }
+}
+
+/* ---- Glass Nav & Cards ---- */
+.glass-nav {
+    background: rgba(15, 23, 42, 0.7) !important;
+    backdrop-filter: blur(16px) saturate(180%);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 20px 40px -12px rgba(0,0,0,0.6);
+}
+
+.glass-input {
+    background: rgba(255,255,255,0.06) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    color: #f8fafc !important;
+}
+.glass-input:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.3) !important;
+    background: rgba(255,255,255,0.08) !important;
+}
+.glass-input::placeholder {
+    color: rgba(255,255,255,0.3);
+}
+
+.neon-btn {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    border: none !important;
+    border-radius: 16px !important;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    box-shadow: 0 0 20px rgba(99,102,241,0.3);
+}
+.neon-btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 40px rgba(99,102,241,0.5);
+}
+
+/* ---- Review Row – Color Differentiation ---- */
+.review-row {
+    transition: background 0.2s;
+    border-radius: 12px;
+    padding: 12px 8px;
+}
+.review-row:hover {
+    background: rgba(255,255,255,0.03);
+}
+
+/* S.No */
+.review-row .sno-col .badge {
+    background: rgba(255,255,255,0.08) !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+/* Avatar */
+.avatar-img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.1);
+}
+.avatar-fallback {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+/* Reviewer Name */
+.review-row .name-col h6 {
+    color: #f8fafc !important;
+    text-shadow: 0 0 8px rgba(0,0,0,0.5);
+    font-weight: 600;
+}
+
+/* Verified badge */
+.review-row .badge.bg-success-subtle {
+    background: rgba(34, 197, 94, 0.15) !important;
+    color: #4ade80 !important;
+}
+
+/* Rating */
+.review-row .rating-badge {
+    background: rgba(255, 215, 0, 0.12);
+    color: #fbbf24 !important;
+    padding: 0.2rem 0.6rem;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid rgba(255,215,0,0.1);
+}
+
+/* Description */
+.review-row .review-text {
+    color: #cbd5e1 !important;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Date */
+.review-row .date-badge {
+    background: rgba(255,255,255,0.06);
+    color: #94a3b8 !important;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* ---- Skeleton Shimmer ---- */
+.skeleton-card {
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.8s infinite;
+}
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 992px) {
+    .review-row {
+        flex-wrap: wrap;
+    }
+    .review-row > div {
+        margin-bottom: 6px;
+    }
+    .desc-col {
+        flex: 0 0 100% !important;
+        padding-left: 0 !important;
+        margin-top: 6px;
+    }
+    .date-col {
+        text-align: left !important;
+        margin-left: auto;
+    }
+}
